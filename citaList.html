@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Práctica 2</title>
+    <!--BootStrap-->
+    <link rel="stylesheet" href="vendor/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="controllers/alumnoController.js"></script>
+</head>
+
+<body>
+    <!--Barra navegación-->
+    <nav class="navbar navbar-expand-lg  navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <h1>Práctica 2</h1>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Médicos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Pacientes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Citas</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <h2>Listado citas</h2>
+    <div class="container">
+        <div class="row">
+            <!--Espacio formulario-->
+            <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
+                <form id="formularioBusqueda">
+                    <div class="mb-3">
+                        <label for="inputDniLbl" class="form-label">DNI</label>
+                        <input type="text" class="form-control" id="inputDni" name="dni">
+                        <div id="dniHelp" class="form-text">Filtro por DNI</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputColegiadoLbl" class="form-label">Colegiado</label>
+                        <input type="text" class="form-control" id="inputColegiado" name="num_colegiado">
+                        <div id="colegiadoHelp" class="form-text">Filtro por Colegiado</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputNameLbl" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="inputName" aria-describedby="Nombre" name="nombre">
+                        <div id="nameHelp" class="form-text">Filtro por nombre</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputApellido1Lbl" class="form-label">Apellido 1</label>
+                        <input type="text" class="form-control" id="inputApellido1" aria-describedby="Apellido 1"
+                            name="apellido1">
+                        <div id="apellido1Help" class="form-text">Filtro por apellido 1</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputApellido2Lbl" class="form-label">Apellido 2</label>
+                        <input type="text" class="form-control" id="inputApellido2" aria-describedby="Apellido 2"
+                            name="apellido2">
+                        <div id="apellido2Help" class="form-text">Filtro por apellido 2</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputEspecialidadLbl" class="form-label">Especialidad</label>
+                        <input type="text" class="form-control" id="inputEspecialidad" aria-describedby="Especialidad"
+                            name="especialidad">
+                        <div id="especialidadHelp" class="form-text">Filtro por Especialidad</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputTelefonoLbl" class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" id="inputTelefono" aria-describedby="Teléfono"
+                            name="telefono">
+                        <div id="telefonoHelp" class="form-text">Filtro por teléfono</div>
+                    </div>
+                    <button type="submit" class="btn btn-dark" id="btnBuscar">Buscar</button>
+                    <button type="submit" class="btn btn-dark" id="btnInsertar">Limpiar</button>
+                    <button type="button" class="btn btn-dark" id="btnLimpiar">Limpiar</button>
+                </form>
+            </div>
+            <div class="col-sm-12 col-md-8 col-lg-8 col-xl-8">
+                <table class="table table-striped" id="tablaDatos">
+                    <thead>
+                        <tr>
+                            <th>DNI:</th>
+                            <th>COLEGIADO:</th>
+                            <th>NOMBRE:</th>
+                            <th>APELLIDO 1:</th>
+                            <th>APELLIDO 2:</th>
+                            <th>ESPECIALIDAD:</th>
+                            <th>TELEFONO:</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Tabla con los datos obtenidos -->
+                    </tbody>
+                </table>
+                <div id="pagination">
+                </div>
+                <div class="mb-3">
+                    <nav aria-label="ejemplo de paginación">
+                        <ul class="pagination">
+                            <li class="page-item"><a class="page-link" href="#" data-action="primera"><<</a></li>
+                            <li class="page-item"><a class="page-link" href="#" data-action="anterior"><</a></li>
+                            <li class="page-item"><a class="page-link" href="#" data-action="siguiente">></a></li>
+                            <li class="page-item"><a class="page-link" href="#" data-action="ultima">>></a></li>
+                            <li id="detalleregistros" class="col-sm-3"></li>
+
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
