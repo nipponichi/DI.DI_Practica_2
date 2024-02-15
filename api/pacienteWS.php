@@ -1,6 +1,6 @@
 <?php
 
-include '../api/accionesMedico.php';
+include '../api/accionesPaciente.php';
 include '../api/conexionWS.php';
 
 try {
@@ -17,9 +17,9 @@ switch ($metodo) {
     case 'GET':
         // Obtiene los filtros de la URL
         $parametros = $_GET;
-        
-        // Llama a la función obtenerMedicos con los parámetros obtenidos
-        $resultado = AccionesMedico::obtenerMedicos($pdo, $parametros);
+    
+        // Llama a la función obtenerPacientes con los parámetros obtenidos
+        $resultado = AccionesPaciente::obtenerPacientes($pdo, $parametros);
 
         // Devuelve la respuesta
         echo $resultado;
@@ -27,8 +27,8 @@ switch ($metodo) {
         break;
 
     case 'POST':
-        // Llama a la función insertarMedico
-        $resultado = AccionesMedico::insertarMedico($pdo);
+        // Llama a la función insertarPaciente
+        $resultado = AccionesPaciente::insertarPaciente($pdo);
 
         // Retorna la respuesta
         echo $resultado;
@@ -37,8 +37,8 @@ switch ($metodo) {
 
 
     case 'DELETE':
-        // Llama a la función eliminarMedico
-        $resultado = AccionesMedico::eliminarMedico($pdo);
+        // Llama a la función eliminarPaciente
+        $resultado = AccionesPaciente::eliminarPaciente($pdo);
 
         // Envía la respuesta
         echo $resultado;
@@ -46,8 +46,8 @@ switch ($metodo) {
         break;
 
     case 'PUT':
-        // Llama a la función modificarMedico
-        $resultado = AccionesMedico::modificarMedico($pdo);
+        // Llama a la función modificarPaciente
+        $resultado = AccionesPaciente::modificarPaciente($pdo);
 
         // Envía la respuesta
         echo $resultado;

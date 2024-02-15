@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(function (link) {
         link.addEventListener('click', function (e) {
-            e.preventDefault();
+            e.preventDefault(); 
             var page = this.textContent.trim();
             switch (page) {
                 case 'Médicos':
@@ -25,51 +25,51 @@ document.addEventListener('DOMContentLoaded', function () {
 
     $(document).ready(function () {
 
-        buscarMedicos();
+        buscarPacientes();
 
         // Botón Buscar
         $('#btnBuscar').click(function (e) {
             e.preventDefault();
-            buscarMedicos();
+            buscarPacientes();
         });
 
         // Botón Insertar
         $('#btnInsertar').click(function (e) {
             e.preventDefault();
-            insertarMedicos();
+            insertarPacientes();
         });
 
         // Botón Eliminar
         $('#btnEliminar').click(function (e) {
             e.preventDefault();
-            eliminarMedicos();
+            eliminarPacientes();
         });
 
         // Botón Modificar
         $('#btnModificar').click(function (e) {
             e.preventDefault();
-            modificarMedicos();
+            modificarPacientes();
         });
 
         // Obtiene valores filtrados de médicos
-        function buscarMedicos() {
+        function buscarPacientes() {
             // Recoge los valores de los campos del formulario
-            var filtros = {
+            var paciente = {
                 dni: $('#inputDni').val(),
-                numero_colegiado: $('#inputColegiado').val(),
+                sip: $('#inputSip').val(),
                 nombre: $('#inputName').val(),
                 apellido1: $('#inputApellido1').val(),
                 apellido2: $('#inputApellido2').val(),
-                especialidad_id: $('#inputEspecialidad').val(),
-                telefono: $('#inputTelefono').val()
+                sexo: $('#inputSexo').val(),
+                fecha_nacimiento: $('#inputFecha_Nacimiento').val()
             };
 
             // Añade a parametros los valores
-            var parametros = $.param(filtros);
+            var parametros = $.param(paciente);
 
             // Realiza la petición AJAX para buscar médicos con los filtros
             $.ajax({
-                url: 'http://localhost/di_practica_2/api/medicoWS.php',
+                url: 'http://localhost/di_practica_2/api/pacienteWS.php',
                 type: 'GET',
                 data: parametros,
                 dataType: 'json',
@@ -77,74 +77,70 @@ document.addEventListener('DOMContentLoaded', function () {
                     console.log(respuesta);
                     if (respuesta.status === 'success') {
                         limpiarCampos();
-                        mostrarMedicos(respuesta.medicos);
+                        mostrarPacientes(respuesta.pacientes);
                     } else {
-                        alert("Error cargando el listado de médicos");
+                        alert(respuesta.message);
                         limpiarCampos();
                     }
                 }
             });
         }
 
-        // Crea un nuevo médico con los valores del formulario
-        function insertarMedicos() {
+        // Crea un nuevo paciente con los valores del formulario
+        function insertarPacientes() {
             // Recoge los valores de los campos del formulario
-            var medico = {
+            var paciente = {
                 dni: $('#inputDni').val(),
-                numero_colegiado: $('#inputColegiado').val(),
+                sip: $('#inputSip').val(),
                 nombre: $('#inputName').val(),
                 apellido1: $('#inputApellido1').val(),
                 apellido2: $('#inputApellido2').val(),
-                especialidad_id: $('#inputEspecialidad').val(),
-                telefono: $('#inputTelefono').val()
+                sexo: $('#inputSexo').val(),
+                fecha_nacimiento: $('#inputFecha_Nacimiento').val()
             };
 
-            // Petición AJAX para insertar un nuevo médico
+            // Petición AJAX para insertar un nuevo paciente
             $.ajax({
-                url: 'http://localhost/di_practica_2/api/medicoWS.php',
+                url: 'http://localhost/di_practica_2/api/pacienteWS.php',
                 type: 'POST',
                 dataType: 'json',
                 contentType: 'application/json',
-                data: medico,
+                data: paciente,
                 success: function (respuesta) {
                     console.log(respuesta);
                     if (respuesta.status === 'success') {
-                        alert("Médico creado con éxito.");
+                        alert(respuesta.message);
                         limpiarCampos();
-                        buscarMedicos();
+                        buscarPacientes();
                     } else {
-                        alert("No se ha podido crear el nuevo médico.");
+                        alert(respuesta.message);
                         limpiarCampos();
-                        buscarMedicos();
+                        buscarPacientes();
                     }
                 },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    console.log(textStatus, errorThrown);
-                    alert("Error en la solicitud AJAX");
-                }
             });
 
         }
 
-        // Elimina un médico tomando su campo DNI
-        function eliminarMedicos() {
+        // Elimina un paciente tomando su campo DNI
+        function eliminarPacientes() {
             // Recoge los valores de los campos del formulario
             var dni = $('#inputDni').val();
 
             // Verifica que dni tenga valor
             if (!dni) {
-                alert('Debes introducir el DNI del médico a eliminar.');
+                alert('Debes introducir el DNI del paciente a eliminar.');
                 return;
             } else {
 
-                if (!confirm('¿Deseas eliminar al médico con DNI ' + dni + '?')) {
+                if (!confirm('¿Deseas eliminar al paciente con DNI ' + dni + '?')) {
                     return;
                 }
             }
 
-            // Realiza la petición AJAX para eliminar médico
+            // Realiza la petición AJAX para eliminar paciente
             $.ajax({
-                url: 'http://localhost/di_practica_2/api/medicoWS.php',
+                url: 'http://localhost/di_practica_2/api/pacienteWS.php',
                 type: 'DELETE',
                 dataType: 'json',
                 contentType: 'application/json',
@@ -152,41 +148,41 @@ document.addEventListener('DOMContentLoaded', function () {
                 success: function (respuesta) {
                     console.log(respuesta);
                     if (respuesta.status === 'success') {
-                        alert("Médico eliminado con éxito.");
+                        alert(respuesta.message);
                         limpiarCampos();
-                        buscarMedicos();
+                        buscarPacientes();
                     } else {
-                        alert("No se ha podido eliminar el médico.");
+                        alert(respuesta.message);
                         limpiarCampos();
-                        buscarMedicos();
+                        buscarPacientes();
                     }
                 }
             });
 
         }
 
-        // Modifica un registro de médico por su DNI
-        function modificarMedicos() {
+        // Modifica un registro de paciente por su DNI
+        function modificarPacientes() {
             // Recoge los valores de los campos del formulario
-            var formData = {
-                dni: $("#inputDni").val(),
-                numero_colegiado: $("#inputColegiado").val(),
-                nombre: $("#inputName").val(),
-                apellido1: $("#inputApellido1").val(),
-                apellido2: $("#inputApellido2").val(),
-                especialidad: $("#inputEspecialidad").val(),
-                telefono: $("#inputTelefono").val()
+            var paciente = {
+                dni: $('#inputDni').val(),
+                sip: $('#inputSip').val(),
+                nombre: $('#inputName').val(),
+                apellido1: $('#inputApellido1').val(),
+                apellido2: $('#inputApellido2').val(),
+                sexo: $('#inputSexo').val(),
+                fecha_nacimiento: $('#inputFecha_Nacimiento').val()
             };
 
-            if (!formData.dni) {
-                alert('Debes introducir el DNI del médico a modificar.');
+            if (!paciente.dni) {
+                alert('Debes introducir el DNI del paciente a modificar.');
                 return;
             }
 
             // Verifica si todos los campos están vacíos
             var camposVacios = true;
-            for (var key in formData) {
-                if (formData[key] !== "") {
+            for (var key in paciente) {
+                if (paciente[key] !== "") {
                     camposVacios = false;
                     break;
                 }
@@ -199,42 +195,42 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Realiza la petición AJAX
             $.ajax({
-                url: 'http://localhost/di_practica_2/api/medicoWS.php',
+                url: 'http://localhost/di_practica_2/api/pacienteWS.php',
                 type: "PUT",
                 dataType: 'json',
-                data: JSON.stringify(formData),
+                data: JSON.stringify(paciente),
                 contentType: "application/json",
                 success: function (respuesta) {
                     console.log(respuesta);
                     if (respuesta.status === 'success') {
-                        alert("Médico modificado con éxito.");
+                        alert(respuesta.message);
                         limpiarCampos();
-                        buscarMedicos();
+                        buscarPacientes();
                     } else {
-                        alert("No se han podido actualizar los datos.");
+                        alert(respuesta.message);
                         limpiarCampos();
-                        buscarMedicos();
+                        buscarPacientes();
                     }
                 }
             });
 
         }
 
-        // Muestra el listado de médicos en la tabla
-        function mostrarMedicos(medicos) {
+        // Muestra el listado de pacientes en la tabla
+        function mostrarPacientes(pacientes) {
             // Limpia la tabla
             $('#tablaDatos tbody').empty();
             // Añade los nuevos datos a la tabla
-            medicos.forEach(function (valor) {
+            pacientes.forEach(function (valor) {
                 $('#tablaDatos tbody').append(`
                     <tr>
                         <td>${valor.dni}</td>
-                        <td>${valor.numero_colegiado}</td>
+                        <td>${valor.sip}</td>
                         <td>${valor.nombre}</td>
                         <td>${valor.apellido1}</td>
                         <td>${valor.apellido2}</td>
-                        <td>${valor.especialidad_id}</td>
-                        <td>${valor.telefono}</td>
+                        <td>${valor.sexo}</td>
+                        <td>${valor.fecha_nacimiento}</td>
                     </tr>
                 `);
             });
@@ -246,8 +242,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
     });
+
 });
-
-
 
 

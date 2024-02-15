@@ -1,9 +1,9 @@
 <?php
 
-class AccionesMedico
+class AccionesPaciente
 {
-    // Devuelve el listado de médicos y el total de registros
-    public static function obtenerMedicos($pdo,$parametros)
+    // Devuelve el listado de pacientes y el total de registros
+    public static function obtenerPacientes($pdo,$parametros)
     {
         $where = [];
         $valores = [];
@@ -18,56 +18,56 @@ class AccionesMedico
         if ($where) {
             $whereSql = 'WHERE ' . implode(' AND ', $where);
         }
-        $sql = $pdo->prepare("SELECT * FROM medicos $whereSql");
-        $sqlCount = $pdo->prepare("SELECT COUNT(*) FROM medicos $whereSql");
-
+        $sql = $pdo->prepare("SELECT * FROM pacientes $whereSql");
+        $sqlCount = $pdo->prepare("SELECT COUNT(*) FROM pacientes $whereSql");
+        
         $sql->execute($valores);
         $sqlCount->execute($valores);
         $sql->setFetchMode(PDO::FETCH_ASSOC);
         $sqlCount->setFetchMode(PDO::FETCH_ASSOC);
-        $medicos = $sql->fetchAll();
+        $pacientes = $sql->fetchAll();
         $total = $sqlCount->fetchColumn();
         // Devuelve el resultado de la consulta
-        if (!empty($medicos)) {
-            $resultado = json_encode(['status' => 'success', 'medicos' => $medicos, 'message' => 'Listado médicos']);
+        if (!empty($pacientes)) {
+            $resultado = json_encode(['status' => 'success', 'pacientes' => $pacientes, 'message' => 'Listado pacientes']);
         } else {
-            $resultado = json_encode(['status' => 'error', 'message' => 'Error cargando listado médicos']);
+            $resultado = json_encode(['status' => 'error', 'message' => 'Error cargando listado pacientes']);
         }
-        error_log(print_r('Resultados medicosWS', true));
-        error_log('Resultado: ' . $resultado . ', Medicos: ' . print_r($medicos, true));
+        error_log(print_r('Resultados pacientesWS', true));
+        error_log('Resultado: ' . $resultado . ', Pacientes: ' . print_r($pacientes, true));
         return $resultado;
     }
 
-    // Inserta el médico en la base de datos
-    public static function insertarMedico($pdo)
+    // Inserta el paciente en la base de datos
+    public static function insertarPaciente($pdo)
     {
-        parse_str(file_get_contents('php://input'), $medico);
+        parse_str(file_get_contents('php://input'), $paciente);
         // Prepara la consulta SQL
-        $sql = "INSERT INTO medicos (dni, numero_colegiado, nombre, apellido1, apellido2, especialidad_id, telefono) VALUES (:dni, :numero_colegiado, :nombre, :apellido1, :apellido2, :especialidad_id, :telefono)";
+        $sql = "INSERT INTO pacientes (dni, sip, nombre, apellido1, apellido2, sexo, fecha_nacimiento) VALUES (:dni, :sip, :nombre, :apellido1, :apellido2, :sexo, :fecha_nacimiento)";
 
         // Prepara la declaración
         $stmt = $pdo->prepare($sql);
 
         // Vincula los parámetros
-        $stmt->bindParam(':dni', $medico['dni']);
-        $stmt->bindParam(':numero_colegiado', $medico['numero_colegiado']);
-        $stmt->bindParam(':nombre', $medico['nombre']);
-        $stmt->bindParam(':apellido1', $medico['apellido1']);
-        $stmt->bindParam(':apellido2', $medico['apellido2']);
-        $stmt->bindParam(':especialidad_id', $medico['especialidad_id']);
-        $stmt->bindParam(':telefono', $medico['telefono']);
+        $stmt->bindParam(':dni', $paciente['dni']);
+        $stmt->bindParam(':sip', $paciente['sip']);
+        $stmt->bindParam(':nombre', $paciente['nombre']);
+        $stmt->bindParam(':apellido1', $paciente['apellido1']);
+        $stmt->bindParam(':apellido2', $paciente['apellido2']);
+        $stmt->bindParam(':sexo', $paciente['sexo']);
+        $stmt->bindParam(':fecha_nacimiento', $paciente['fecha_nacimiento']);
 
         // Retorna el resultado de la consulta
         if ($stmt->execute()) {
-            $resultado = json_encode(['status' => 'success', 'message' => 'Medico creado correctamente']);
+            $resultado = json_encode(['status' => 'success', 'message' => 'Paciente creado correctamente']);
         } else {
             $resultado = json_encode(['status' => 'error', 'message' => 'Error creando paciente']);
         }
         return $resultado;
     }
 
-    // Elimina el médico de la base de datos tomando su DNI
-    public static function eliminarMedico($pdo)
+    // Elimina el paciente de la base de datos tomando su DNI
+    public static function eliminarPaciente($pdo)
     {
         // Obtiene el dni
         $datos = file_get_contents("php://input");
@@ -76,7 +76,7 @@ class AccionesMedico
         list($key, $value) = explode('=', $datos);
         $dni = $value;
 
-        $sql = "DELETE FROM medicos WHERE dni = :dni";
+        $sql = "DELETE FROM pacientes WHERE dni = :dni";
 
         $stmt = $pdo->prepare($sql);
 
@@ -85,20 +85,20 @@ class AccionesMedico
 
         // Retorna el resultado de la consulta
         if ($stmt->execute()) {
-            $resultado = json_encode(['status' => 'success', 'message' => 'Medico eliminado correctamente']);
+            $resultado = json_encode(['status' => 'success', 'message' => 'Paciente eliminado correctamente']);
         } else {
-            $resultado = json_encode(['status' => 'error', 'message' => 'DNI no encontrado']);
+            $resultado = json_encode(['status' => 'error', 'message' => 'Error al eliminar paciente']);
         }
         return $resultado;
     }
 
-    public static function modificarMedico($pdo)
+    public static function modificarPaciente($pdo)
     {
         // Recibe los datos del formulario
         $datos = json_decode(file_get_contents('php://input'), true);
 
         // Busca el DNI en la base de datos
-        $stmt = $pdo->prepare("SELECT * FROM medicos WHERE dni = ?");
+        $stmt = $pdo->prepare("SELECT * FROM pacientes WHERE dni = ?");
         $stmt->execute([$datos['dni']]);
 
         // Devuelve valor si encuentra el dni
@@ -114,7 +114,7 @@ class AccionesMedico
             $campos = array_keys($datos);
 
             // Construimos el SET de la consulta
-            $sql = "UPDATE medicos SET " . implode(" = ?, ", $campos) . " = ? WHERE dni = ?";
+            $sql = "UPDATE pacientes SET " . implode(" = ?, ", $campos) . " = ? WHERE dni = ?";
 
             // Añade dni a las datos a modificar
             $parametros = array_values($datos);
@@ -125,9 +125,9 @@ class AccionesMedico
             $stmt = $pdo->prepare($sql);
             $stmt->execute($parametros);
 
-            $resultado = json_encode(['status' => 'success', 'message' => 'Datos actualizados correctamente']);
+            $resultado = json_encode(['status' => 'success', 'message' => 'Datos de paciente actualizados correctamente']);
         } else {
-            $resultado = json_encode(['status' => 'error', 'message' => 'DNI no encontrado']);
+            $resultado = json_encode(['status' => 'error', 'message' => 'DNI de paciente no encontrado']);
         }
 
         return $resultado;
