@@ -1,0 +1,25 @@
+/* Separación etiqueta ul */
+ul {
+    margin-top: 10px;
+}
+
+/* Botones paginación */
+#btnPaginacion {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Logo Index */
+#logo {
+    width: 350px;
+    height: auto;
+}
+
+/* boton Login */
+#login {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

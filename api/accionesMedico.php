@@ -1,5 +1,7 @@
 <?php
 
+include '../api/accionesPaginacion.php';
+
 class AccionesMedico
 {
     // Devuelve el listado de médicos y el total de registros
@@ -9,7 +11,7 @@ class AccionesMedico
         $valores = [];
 
         foreach ($parametros as $clave => $valor) {
-            if (!empty($valor)) {
+            if (!empty($valor) && $clave != 'registrosPagina' && $clave != 'numeroPagina') {
                 $where[] = "$clave = :$clave";
                 $valores[":$clave"] = $valor;
             }
@@ -18,18 +20,35 @@ class AccionesMedico
         if ($where) {
             $whereSql = 'WHERE ' . implode(' AND ', $where);
         }
-        $sql = $pdo->prepare("SELECT * FROM medicos $whereSql");
+        // Obtiene recuento de médicos
         $sqlCount = $pdo->prepare("SELECT COUNT(*) FROM medicos $whereSql");
-
-        $sql->execute($valores);
         $sqlCount->execute($valores);
-        $sql->setFetchMode(PDO::FETCH_ASSOC);
         $sqlCount->setFetchMode(PDO::FETCH_ASSOC);
-        $medicos = $sql->fetchAll();
         $total = $sqlCount->fetchColumn();
+
+        $numeroPagina = isset($parametros['numeroPagina']) ? $parametros['numeroPagina'] : 1;
+        $registrosPagina = isset($parametros['registrosPagina']) ? $parametros['registrosPagina'] : 10;
+
+        error_log(print_r('Numero pagina ', true));
+        error_log('PaginaP: ' . $numeroPagina);
+        //Obtenemos el calculo de la paginación
+        $resultadoPaginacion = AccionesPaginacion::obtenerPaginacion($total, $registrosPagina, $numeroPagina);
+
+        // Registros a saltar
+        $offset = ($numeroPagina - 1) * $registrosPagina;
+
+        $limit = (int) $registrosPagina;
+        $offset = (int) $offset;
+
+        // Obtenemos total pacientes segun hoja y registros seleccionados
+        $sql = $pdo->prepare("SELECT * FROM medicos $whereSql LIMIT $limit OFFSET $offset");
+        $sql->execute($valores);
+        $sql->setFetchMode(PDO::FETCH_ASSOC);
+        $medicos = $sql->fetchAll();
+
         // Devuelve el resultado de la consulta
         if (!empty($medicos)) {
-            $resultado = json_encode(['status' => 'success', 'medicos' => $medicos, 'message' => 'Listado médicos']);
+            $resultado = json_encode(['status' => 'success', 'medicos' => $medicos, 'message' => 'Listado médicos', 'Total' => $total, 'Paginacion' => $resultadoPaginacion]);
         } else {
             $resultado = json_encode(['status' => 'error', 'message' => 'Error cargando listado médicos']);
         }
@@ -110,6 +129,9 @@ class AccionesMedico
                 return $valor !== "";
             });
 
+             // Elimina registrosPagina y numeroPagina de datos
+             unset($datos['registrosPagina'], $datos['numeroPagina']);
+             
             // Recoge los campos con valores ya filtrados los vacíos
             $campos = array_keys($datos);
 

@@ -17,7 +17,7 @@ switch ($metodo) {
     case 'GET':
         // Obtiene los filtros de la URL
         $parametros = $_GET;
-    
+        
         // Llama a la función obtenerPacientes con los parámetros obtenidos
         $resultado = AccionesPaciente::obtenerPacientes($pdo, $parametros);
 

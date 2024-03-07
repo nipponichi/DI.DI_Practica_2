@@ -1,15 +1,17 @@
 <?php
 
+include '../api/accionesPaginacion.php';
+
 class AccionesPaciente
 {
     // Devuelve el listado de pacientes y el total de registros
-    public static function obtenerPacientes($pdo,$parametros)
+    public static function obtenerPacientes($pdo, $parametros)
     {
         $where = [];
         $valores = [];
 
         foreach ($parametros as $clave => $valor) {
-            if (!empty($valor)) {
+            if (!empty($valor) && $clave != 'registrosPagina' && $clave != 'numeroPagina') {
                 $where[] = "$clave = :$clave";
                 $valores[":$clave"] = $valor;
             }
@@ -18,23 +20,43 @@ class AccionesPaciente
         if ($where) {
             $whereSql = 'WHERE ' . implode(' AND ', $where);
         }
-        $sql = $pdo->prepare("SELECT * FROM pacientes $whereSql");
+
+        // Obtenemos recuento pacientes
         $sqlCount = $pdo->prepare("SELECT COUNT(*) FROM pacientes $whereSql");
-        
-        $sql->execute($valores);
         $sqlCount->execute($valores);
-        $sql->setFetchMode(PDO::FETCH_ASSOC);
         $sqlCount->setFetchMode(PDO::FETCH_ASSOC);
-        $pacientes = $sql->fetchAll();
         $total = $sqlCount->fetchColumn();
+
+        $numeroPagina = isset($parametros['numeroPagina']) ? $parametros['numeroPagina'] : 1;
+        $registrosPagina = isset($parametros['registrosPagina']) ? $parametros['registrosPagina'] : 10;
+
+        error_log(print_r('Numero pagina ', true));
+        error_log('PaginaP: ' . $numeroPagina);
+        //Obtenemos el calculo de la paginación
+        $resultadoPaginacion = AccionesPaginacion::obtenerPaginacion($total, $registrosPagina, $numeroPagina);
+
+        // Registros a saltar según número de página
+        $offset = ($numeroPagina - 1) * $registrosPagina;
+
+        $limit = (int) $registrosPagina;
+        $offset = (int) $offset;
+
+        // Obtenemos total pacientes segun hoja y registros seleccionados
+        $sql = $pdo->prepare("SELECT * FROM pacientes $whereSql LIMIT $limit OFFSET $offset");
+        $sql->execute($valores);
+        $sql->setFetchMode(PDO::FETCH_ASSOC);
+        $pacientes = $sql->fetchAll();
+
         // Devuelve el resultado de la consulta
         if (!empty($pacientes)) {
-            $resultado = json_encode(['status' => 'success', 'pacientes' => $pacientes, 'message' => 'Listado pacientes']);
+            $resultado = json_encode(['status' => 'success', 'pacientes' => $pacientes, 'message' => 'Listado pacientes', 'Total' => $total, 'Paginacion' => $resultadoPaginacion]);
         } else {
             $resultado = json_encode(['status' => 'error', 'message' => 'Error cargando listado pacientes']);
         }
+
         error_log(print_r('Resultados pacientesWS', true));
         error_log('Resultado: ' . $resultado . ', Pacientes: ' . print_r($pacientes, true));
+
         return $resultado;
     }
 
@@ -105,10 +127,14 @@ class AccionesPaciente
         $hayDni = $stmt->fetch();
 
         if ($hayDni) {
+
             // Filtra los campos vacíos
             $datos = array_filter($datos, function ($valor) {
                 return $valor !== "";
             });
+
+            // Elimina registrosPagina y numeroPagina de datos
+            unset($datos['registrosPagina'], $datos['numeroPagina']);
 
             // Recoge los campos con valores ya filtrados los vacíos
             $campos = array_keys($datos);

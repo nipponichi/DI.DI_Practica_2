@@ -1,5 +1,7 @@
 <?php
 
+include '../api/accionesPaginacion.php';
+
 class AccionesCita
 {
     // Devuelve el listado de citas y el total de registros
@@ -9,7 +11,7 @@ class AccionesCita
         $valores = [];
 
         foreach ($parametros as $clave => $valor) {
-            if (!empty($valor)) {
+            if (!empty($valor) && $clave != 'registrosPagina' && $clave != 'numeroPagina') {
                 $where[] = "$clave = :$clave";
                 $valores[":$clave"] = $valor;
             }
@@ -19,15 +21,32 @@ class AccionesCita
             // Separamos con AND todos los filtros para contruir la clausula WHERE
             $whereSql = 'WHERE ' . implode(' AND ', $where);
         }
-        $sql = $pdo->prepare("SELECT * FROM citas $whereSql");
-        $sqlCount = $pdo->prepare("SELECT COUNT(*) FROM citas $whereSql");
 
-        $sql->execute($valores);
+        // Obtenemos recuento citas
+        $sqlCount = $pdo->prepare("SELECT COUNT(*) FROM citas $whereSql");
         $sqlCount->execute($valores);
-        $sql->setFetchMode(PDO::FETCH_ASSOC);
         $sqlCount->setFetchMode(PDO::FETCH_ASSOC);
-        $citas = $sql->fetchAll();
         $total = $sqlCount->fetchColumn();
+        
+
+        $numeroPagina = isset($parametros['numeroPagina']) ? $parametros['numeroPagina'] : 1;
+        $registrosPagina = isset($parametros['registrosPagina']) ? $parametros['registrosPagina'] : 10;
+
+        // Obtenemos el cálculo de la paginación
+        $resultadoPaginacion = AccionesPaginacion::obtenerPaginacion($total, $registrosPagina, $numeroPagina);
+
+        // Registros a saltar
+        $offset = ($numeroPagina - 1) * $registrosPagina;
+
+        $limit = (int) $registrosPagina;
+        $offset = (int) $offset;
+
+        // Obtenemos total citas segun hoja y registros seleccionados
+        $sql = $pdo->prepare("SELECT * FROM citas $whereSql LIMIT $limit OFFSET $offset");
+        $sql->execute($valores);
+        $sql->setFetchMode(PDO::FETCH_ASSOC);
+        $citas = $sql->fetchAll();
+
 
         // Añadimos los datos de los médicos y pacientes a las citas
         foreach ($citas as &$cita) {
@@ -41,7 +60,7 @@ class AccionesCita
 
         // Devuelve el resultado de la consulta
         if (!empty($citas)) {
-            $resultado = json_encode(['status' => 'success', 'citas' => $citas, 'message' => 'Listado citas']);
+            $resultado = json_encode(['status' => 'success', 'citas' => $citas, 'message' => 'Listado citas', 'Total' => $total, 'Paginacion' => $resultadoPaginacion]);
         } else {
             $resultado = json_encode(['status' => 'error', 'message' => 'Error cargando listado citas']);
         }
@@ -128,6 +147,8 @@ class AccionesCita
                 return $valor !== "";
             });
 
+            // Elimina registrosPagina y numeroPagina de datos
+            unset($cita['registrosPagina'], $cita['numeroPagina']);
             // Recoge los campos con valores ya filtrados los vacíos
             $campos = array_keys($cita);
 
