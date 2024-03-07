@@ -1,12 +1,15 @@
 document.addEventListener('DOMContentLoaded', function () {
 
     // Manejo de enlaces en navBar
-    var navLinks = document.querySelectorAll('.nav-link');
+    let navLinks = document.querySelectorAll('.nav-link, .navbar-brand');
     navLinks.forEach(function (link) {
         link.addEventListener('click', function (e) {
             e.preventDefault();
-            var pagina = this.textContent.trim();
-            switch (pagina) {
+            let page = this.textContent.trim();
+            switch (page) {
+                case 'Logout':
+                    window.location.href = 'index.html';
+                    break;
                 case 'Médicos':
                     window.location.href = 'medicoList.html';
                     break;
@@ -17,63 +20,87 @@ document.addEventListener('DOMContentLoaded', function () {
                     window.location.href = 'citaList.html';
                     break;
                 default:
-                    console.log('Página no encontrada');
+                    alert('Página no encontrada');
             }
         });
     });
 
     $(document).ready(function () {
 
+        let paginaActual;
+        let totalPaginas;
         buscarCitas();
 
-        // Botón Buscar
-        $('#btnBuscar').click(function (e) {
-            e.preventDefault();
-            buscarCitas();
+        // Botones acción CRUD
+        let btnDark = document.querySelectorAll('.btn.btn-dark');
+        btnDark.forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                let accion = this.title;
+                switch (accion) {
+                    case 'Buscar':
+                        buscarCitas();
+                        break;
+                    case 'Insertar':
+                        insertarCitas();
+                        break;
+                    case 'Eliminar':
+                        eliminarCitas();
+                        break;
+                    case 'Modificar':
+                        modificarCitas();
+                        break;
+                }
+            });
         });
 
-        // Botón Insertar
-        $('#btnInsertar').click(function (e) {
-            e.preventDefault();
-            insertarCita();
+        // Botones paginación 
+        let btnPaginacion = document.querySelectorAll('.page-link');
+        btnPaginacion.forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                let accion = this.dataset.action;
+                switch (accion) {
+                    case 'siguiente':
+                        if(paginaActual != totalPaginas) {
+                            paginaActual++;
+                        buscarCitas(paginaActual);
+                        }
+                        break;
+                    case 'anterior':
+                        if(paginaActual != 1) {
+                            paginaActual--;
+                        buscarCitas(paginaActual);
+                        }
+                        break;
+                    case 'primera':
+                        buscarCitas(1);
+                        break;
+                    case 'ultima':
+                        buscarCitas(totalPaginas);
+                        break;
+                }
+            });
         });
 
-        // Botón Eliminar
-        $('#btnEliminar').click(function (e) {
-            e.preventDefault();
-            eliminarCita();
-        });
-
-        // Botón Modificar
-        $('#btnModificar').click(function (e) {
-            e.preventDefault();
-            modificarCita();
-        });
-
-        // Obtiene valores filtrados de médicos
-        function buscarCitas() {
+        // Obtiene valores filtrados de citas
+        function buscarCitas(numeroPagina = 1) {
             // Recoge los valores de los campos del formulario
-            var filtros = {
-                id: $('#inputId').val(),
-                sip: $('#inputSip').val(),
-                numero_colegiado: $('#inputColegiado').val(),
-                fecha: $('#inputFecha').val(),
-            };
+            let cita = tomarDatos(numeroPagina);
 
             // Añade a parametros los valores
-            var parametros = $.param(filtros);
+            let parametros = $.param(cita);
 
-            // Realiza la petición AJAX para buscar médicos con los filtros
+            // Realiza la petición AJAX para buscar citas con los filtros
             $.ajax({
                 url: 'http://localhost/di_practica_2/api/citaWS.php',
                 type: 'GET',
                 data: parametros,
                 dataType: 'json',
                 success: function (respuesta) {
-                    console.log(respuesta);
                     if (respuesta.status === 'success') {
                         limpiarCampos();
-                        mostrarCitas(respuesta.citas);
+                        mostrarCitas(respuesta);
                     } else {
                         alert(respuesta.message);
                         limpiarCampos();
@@ -82,18 +109,12 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        // Crea un nuevo médico con los valores del formulario
-        function insertarCita() {
+        // Crea una nueva cita con los valores del formulario
+        function insertarCitas() {
             // Recoge los valores de los campos del formulario
-            var cita = {
-                sip: $('#inputSip').val(),
-                numero_colegiado: $('#inputColegiado').val(),
-                fecha: $('#inputFecha').val(),
-                medico_id: "",
-                paciente_id: "",
-            };
+            let cita = tomarDatos();
 
-            // Petición AJAX para insertar un nuevo médico
+            // Petición AJAX para insertar una nueva cita
             $.ajax({
                 url: 'http://localhost/di_practica_2/api/citaWS.php',
                 type: 'POST',
@@ -101,7 +122,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 contentType: 'application/json',
                 data: cita,
                 success: function (respuesta) {
-                    console.log(respuesta);
                     if (respuesta.status === 'success') {
                         alert(respuesta.message);
                         limpiarCampos();
@@ -117,16 +137,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Elimina una cita tomando su campo ID
-        function eliminarCita() {
+        function eliminarCitas() {
             // Recoge los valores de los campos del formulario
-            var id = $('#inputId').val();
+            let id = $('#inputId').val();
 
             // Verifica que dni tenga valor
             if (!id) {
                 alert('Debes introducir el ID de cita a eliminar.');
                 return;
             } else {
-
                 if (!confirm('¿Deseas eliminar la cita con ID ' + id + '?')) {
                     return;
                 }
@@ -140,7 +159,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 contentType: 'application/json',
                 data: { id: id },
                 success: function (respuesta) {
-                    console.log(respuesta);
                     if (respuesta.status === 'success') {
                         alert(respuesta.message);
                         limpiarCampos();
@@ -156,14 +174,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Modifica un registro de médico por su DNI
-        function modificarCita() {
+        function modificarCitas() {
             // Recoge los valores de los campos del formulario
-            var cita = {
-                id: $('#inputId').val(),
-                sip: $('#inputSip').val(),
-                numero_colegiado: $('#inputColegiado').val(),
-                fecha: $('#inputFecha').val(),
-            };
+            let cita = tomarDatos();
 
             if (!cita.id) {
                 alert('Debes introducir el ID de la cita a modificar.');
@@ -171,8 +184,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // Verifica si todos los campos están vacíos
-            var camposVacios = true;
-            for (var key in cita) {
+            let camposVacios = true;
+            for (let key in cita) {
                 if (cita[key] !== "") {
                     camposVacios = false;
                     break;
@@ -192,7 +205,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 data: JSON.stringify(cita),
                 contentType: "application/json",
                 success: function (respuesta) {
-                    console.log(respuesta);
                     if (respuesta.status === 'success') {
                         alert(respuesta.message);
                         limpiarCampos();
@@ -207,12 +219,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
         }
 
-        // Muestra el listado de médicos en la tabla
-        function mostrarCitas(citas) {
+        // Muestra el listado de citas en la tabla
+        function mostrarCitas(respuesta) {
+
+            // Resultados de la paginación
+            let paginacion = respuesta.Paginacion;
+            let paginasAdicionales = paginacion.paginasAdicionales
+
+            paginaActual = paginacion.paginaActual;
+            totalPaginas = paginacion.totalPaginas;
+
+            // Resultados citas
+            let citas = respuesta.citas;
+
             // Limpia la tabla
             $('#tablaDatos tbody').empty();
             // Añade los nuevos datos a la tabla
-            citas.forEach(function (valor) {
+            for (let i = 0; i < citas.length; i++) {
+                let valor = citas[i];
                 $('#tablaDatos tbody').append(`
                     <tr>
                         <td>${valor.id}</td>
@@ -220,14 +244,45 @@ document.addEventListener('DOMContentLoaded', function () {
                         <td>${valor.numero_colegiado}</td>
                         <td>${valor.sip}</td>
                     </tr>
-                `);
-            });
-        }
+                    `);
+            }
 
+            let elementoPaginacion = document.getElementById('btnPaginacion');
+
+            // Limpia el contenido del elemento
+            elementoPaginacion.innerHTML = '';    
+
+            // Crea un botón por página
+            for (let i = 0; i < paginasAdicionales.length; i++) {
+                let boton = document.createElement('button');
+                boton.textContent = `${paginasAdicionales[i]}`;
+                boton.className = "btn btn-dark";
+                boton.onclick = function () {
+                    paginaActual = paginasAdicionales[i];
+                    // Recarga pacientes según la pagina seleccionada
+                    buscarCitas(paginaActual);
+                };
+                elementoPaginacion.appendChild(document.createTextNode('\u00A0'));
+                elementoPaginacion.appendChild(boton);
+            }
+        }
 
         // Vacía los campos del formulario
         function limpiarCampos() {
             document.getElementById("formularioBusqueda").reset();
+        }
+
+        // Recoge los datos de la web (formulario y configuración páginas)
+        function tomarDatos (numeroPagina) {
+            let cita = {
+                id: $('#inputId').val().trim(),
+                sip: $('#inputSip').val().trim(),
+                numero_colegiado: $('#inputColegiado').val().trim(),
+                fecha: $('#inputFecha').val().trim(),
+                registrosPagina: $('#selectRegistros').val(),
+                numeroPagina: numeroPagina
+            };
+            return cita
         }
 
     });

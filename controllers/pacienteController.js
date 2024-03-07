@@ -2,12 +2,15 @@
 document.addEventListener('DOMContentLoaded', function () {
 
     // Manejo de enlaces en navBar
-    var navLinks = document.querySelectorAll('.nav-link');
+    let navLinks = document.querySelectorAll('.nav-link, .navbar-brand');
     navLinks.forEach(function (link) {
         link.addEventListener('click', function (e) {
-            e.preventDefault(); 
-            var page = this.textContent.trim();
+            e.preventDefault();
+            let page = this.textContent.trim();
             switch (page) {
+                case 'Logout':
+                    window.location.href = 'index.html';
+                    break;
                 case 'Médicos':
                     window.location.href = 'medicoList.html';
                     break;
@@ -18,66 +21,86 @@ document.addEventListener('DOMContentLoaded', function () {
                     window.location.href = 'citaList.html';
                     break;
                 default:
-                    console.log('Página no encontrada');
+                    alert('Página no encontrada');
             }
         });
     });
 
+
     $(document).ready(function () {
 
+        let paginaActual;
+        let totalPaginas;
         buscarPacientes();
 
-        // Botón Buscar
-        $('#btnBuscar').click(function (e) {
-            e.preventDefault();
-            buscarPacientes();
+        // Botones acción CRUD
+        let btnDark = document.querySelectorAll('.btn.btn-dark');
+        btnDark.forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                let accion = this.title;
+                switch (accion) {
+                    case 'Buscar':
+                        buscarPacientes();
+                        break;
+                    case 'Insertar':
+                        insertarPacientes();
+                        break;
+                    case 'Eliminar':
+                        eliminarPacientes();
+                        break;
+                    case 'Modificar':
+                        modificarPacientes();
+                        break;
+                }
+            });
         });
 
-        // Botón Insertar
-        $('#btnInsertar').click(function (e) {
-            e.preventDefault();
-            insertarPacientes();
-        });
-
-        // Botón Eliminar
-        $('#btnEliminar').click(function (e) {
-            e.preventDefault();
-            eliminarPacientes();
-        });
-
-        // Botón Modificar
-        $('#btnModificar').click(function (e) {
-            e.preventDefault();
-            modificarPacientes();
+        // Botones paginación 
+        let btnPaginacion = document.querySelectorAll('.page-link');
+        btnPaginacion.forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                let accion = this.dataset.action;
+                switch (accion) {
+                    case 'siguiente':
+                        if (paginaActual != totalPaginas) {
+                            paginaActual++;
+                            buscarPacientes(paginaActual);
+                        }
+                        break;
+                    case 'anterior':
+                        if (paginaActual != 1) {
+                            paginaActual--;
+                            buscarPacientes(paginaActual);
+                        }
+                        break;
+                    case 'primera':
+                        buscarPacientes(1);
+                        break;
+                    case 'ultima':
+                        buscarPacientes(totalPaginas);
+                        break;
+                }
+            });
         });
 
         // Obtiene valores filtrados de médicos
-        function buscarPacientes() {
-            // Recoge los valores de los campos del formulario
-            var paciente = {
-                dni: $('#inputDni').val(),
-                sip: $('#inputSip').val(),
-                nombre: $('#inputName').val(),
-                apellido1: $('#inputApellido1').val(),
-                apellido2: $('#inputApellido2').val(),
-                sexo: $('#inputSexo').val(),
-                fecha_nacimiento: $('#inputFecha_Nacimiento').val()
-            };
+        function buscarPacientes(numeroPagina = 1) {
 
-            // Añade a parametros los valores
-            var parametros = $.param(paciente);
+            // Recoge los valores de los campos del formulario
+            let paciente = tomarDatos(numeroPagina);
 
             // Realiza la petición AJAX para buscar médicos con los filtros
             $.ajax({
                 url: 'http://localhost/di_practica_2/api/pacienteWS.php',
                 type: 'GET',
-                data: parametros,
+                data: paciente,
                 dataType: 'json',
                 success: function (respuesta) {
-                    console.log(respuesta);
                     if (respuesta.status === 'success') {
                         limpiarCampos();
-                        mostrarPacientes(respuesta.pacientes);
+                        mostrarPacientes(respuesta);
                     } else {
                         alert(respuesta.message);
                         limpiarCampos();
@@ -89,15 +112,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Crea un nuevo paciente con los valores del formulario
         function insertarPacientes() {
             // Recoge los valores de los campos del formulario
-            var paciente = {
-                dni: $('#inputDni').val(),
-                sip: $('#inputSip').val(),
-                nombre: $('#inputName').val(),
-                apellido1: $('#inputApellido1').val(),
-                apellido2: $('#inputApellido2').val(),
-                sexo: $('#inputSexo').val(),
-                fecha_nacimiento: $('#inputFecha_Nacimiento').val()
-            };
+            let paciente = tomarDatos();
 
             // Petición AJAX para insertar un nuevo paciente
             $.ajax({
@@ -107,7 +122,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 contentType: 'application/json',
                 data: paciente,
                 success: function (respuesta) {
-                    console.log(respuesta);
                     if (respuesta.status === 'success') {
                         alert(respuesta.message);
                         limpiarCampos();
@@ -125,14 +139,13 @@ document.addEventListener('DOMContentLoaded', function () {
         // Elimina un paciente tomando su campo DNI
         function eliminarPacientes() {
             // Recoge los valores de los campos del formulario
-            var dni = $('#inputDni').val();
+            let dni = $('#inputDni').val();
 
             // Verifica que dni tenga valor
             if (!dni) {
                 alert('Debes introducir el DNI del paciente a eliminar.');
                 return;
             } else {
-
                 if (!confirm('¿Deseas eliminar al paciente con DNI ' + dni + '?')) {
                     return;
                 }
@@ -164,15 +177,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Modifica un registro de paciente por su DNI
         function modificarPacientes() {
             // Recoge los valores de los campos del formulario
-            var paciente = {
-                dni: $('#inputDni').val(),
-                sip: $('#inputSip').val(),
-                nombre: $('#inputName').val(),
-                apellido1: $('#inputApellido1').val(),
-                apellido2: $('#inputApellido2').val(),
-                sexo: $('#inputSexo').val(),
-                fecha_nacimiento: $('#inputFecha_Nacimiento').val()
-            };
+            let paciente = tomarDatos();
 
             if (!paciente.dni) {
                 alert('Debes introducir el DNI del paciente a modificar.');
@@ -180,8 +185,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // Verifica si todos los campos están vacíos
-            var camposVacios = true;
-            for (var key in paciente) {
+            let camposVacios = true;
+            for (let key in paciente) {
                 if (paciente[key] !== "") {
                     camposVacios = false;
                     break;
@@ -217,11 +222,24 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Muestra el listado de pacientes en la tabla
-        function mostrarPacientes(pacientes) {
+        function mostrarPacientes(respuesta) {
+
+            // Resultados de la paginación
+            let paginacion = respuesta.Paginacion;
+            let paginasAdicionales = paginacion.paginasAdicionales
+
+            paginaActual = paginacion.paginaActual;
+            totalPaginas = paginacion.totalPaginas;
+
+            // Resultados pacientes
+            let pacientes = respuesta.pacientes;
+
             // Limpia la tabla
             $('#tablaDatos tbody').empty();
+
             // Añade los nuevos datos a la tabla
-            pacientes.forEach(function (valor) {
+            for (let i = 0; i < pacientes.length; i++) {
+                let valor = pacientes[i];
                 $('#tablaDatos tbody').append(`
                     <tr>
                         <td>${valor.dni}</td>
@@ -233,7 +251,27 @@ document.addEventListener('DOMContentLoaded', function () {
                         <td>${valor.fecha_nacimiento}</td>
                     </tr>
                 `);
-            });
+            }
+
+            let elementoPaginacion = document.getElementById('btnPaginacion');
+
+            // Limpia el contenido del elemento
+            elementoPaginacion.innerHTML = '';
+
+            // Crea un botón por página
+            for (let i = 0; i < paginasAdicionales.length; i++) {
+                let boton = document.createElement('button');
+                boton.textContent = `${paginasAdicionales[i]}`;
+                boton.className = "btn btn-dark";
+                boton.onclick = function () {
+                    paginaActual = paginasAdicionales[i];
+                    // Recarga pacientes según la pagina seleccionada
+                    buscarPacientes(paginaActual);
+                };
+                elementoPaginacion.appendChild(document.createTextNode('\u00A0'));
+                elementoPaginacion.appendChild(boton);
+            }
+
         }
 
         // Vacía los campos del formulario
@@ -241,8 +279,22 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById("formularioBusqueda").reset();
         }
 
+        // Recoge los datos de la web (formulario y configuración páginas)
+        function tomarDatos(numeroPagina) {
+            let paciente = {
+                dni: $('#inputDni').val().toUpperCase().trim(),
+                sip: $('#inputSip').val().trim(),
+                nombre: $('#inputName').val().trim(),
+                apellido1: $('#inputApellido1').val().trim(),
+                apellido2: $('#inputApellido2').val().trim(),
+                sexo: $('#inputSexo').val().trim(),
+                fecha_nacimiento: $('#inputFecha_Nacimiento').val().trim(),
+                registrosPagina: $('#selectRegistros').val(),
+                numeroPagina: numeroPagina
+            };
+            return paciente;
+        }
+
     });
 
 });
-
-
